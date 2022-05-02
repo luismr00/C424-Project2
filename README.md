@@ -1,3 +1,17 @@
+# How to run
+
+1. Open two terminals seperately and cd to the client and server directory seperately.
+2. Run "npm i" within both terminals once you are in both client and server directories.
+3. Make sure you have mysql up and running within your computer. In case you do not, then go to https://dev.mysql.com/downloads/workbench/. MySQL workbench is recommended but feel free to download any other way you feel more confortable with. In case you do go for workbench, then follow the prompts while downloading and set "root" as user and "3322" as password. You can change the password later on, but set it as "3322" for now. 
+4. Run the server first by running the command in the terminal "npm run devStart". 
+5. Next, run the client by running the command in the terminal "npm run start"
+6. You're all set. Your browser should deploy the page within localhost and you are ready to start engaging with the site.
+
+# Interacting with the website
+
+1. First register and then try to log in. This should take you to a new page called userpage. In case you see the sign in/sign out page, click on sign in again until you see the userpage with two buttons showing up.
+2. Within userpage, click on download file.
+
 <!-- # Basic Front-End with Database Manipulation
 
 For  all  parts  of  this  project,  your  system  must  be  application  or  web-based.  Some  simple  GUI 
