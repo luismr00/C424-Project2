@@ -71,7 +71,7 @@ app.post('/api/login', (req, res) => {
             console.log("result: ", result);
             if (result.length > 0) {
                 session = req.session;
-                session.user = { username: result[0].username, firstName: result[0].first_name, lastName: result[0].last_name };
+                session.user = { username: result[0].username, firstName: result[0].first_name, lastName: result[0].last_name, logTimes: result[0].logTimes, lastLogDate: result[0].lastLogDate };
                 res.status(201).json({ success: true, firstName: result[0].first_name });
             } else {
                 res.status(400).json({ success: false, err: "Invalid username or password" });
@@ -88,12 +88,14 @@ app.post('/api/register', (req, res) => {
     const email = req.body.email;
     console.log('received: ' + username + ', ' + password + ', ' + firstName + ', ' + lastName + ', ' + email);
     
-    db.query("INSERT INTO user VALUES (?, ?, ?, ?, ?)", [
+    db.query("INSERT INTO user VALUES (?, ?, ?, ?, ?, ?, ?)", [
         username,
         password,
         firstName,
         lastName,
-        email
+        email,
+        0,
+        "none"
     ], (err, result) => {
         if (err) {
             console.log(err)
@@ -126,6 +128,31 @@ app.get('/logout',(req,res) => {
     req.session.destroy();
     session.user = null;
     res.status(200).json({ success: true });
+});
+
+app.post('/api/updateLog', (req, res) => {
+    const username = req.body.username;
+    const logTimes = req.body.logTimes;
+    const lastLogDate = req.body.lastLogDate;
+
+    console.log("received: " + username, logTimes, lastLogDate);
+
+    db.query("UPDATE user SET logTimes = ?, lastLogDate = ? WHERE username = ?", [
+        logTimes,
+        lastLogDate,
+        username
+    ], (err, result) => {
+        if (err) {
+            console.log(err)
+            res.status(400).json({ success: false, err: err });
+        }
+        else {
+            console.log("successfully updated user log information");
+            res.status(201).json({ success: true  });
+        }
+    });
+
+
 });
 
 app.get('/api/users', (req, res) => {

@@ -20,12 +20,37 @@ function UserPage() {
     })
     const data = await res.json();
     if(data.success) {
+      updateLogs();
       console.log("logout successful");
       setAuthenticated(false);
       setUser(null);
     } else {
       console.log("logout failed");
     }
+  }
+
+  //'/api/updateLog'
+  const updateLogs = async () => {
+
+    let logTimes = user.logTimes;
+    let date = new Date();
+    let year = date.getFullYear();
+    let month = date.getMonth();
+    let day = date.getDate();
+    let fulldate = month + '-' + day + '-' + year;
+
+    const res = await fetch("http://localhost:4000/api/updateLog", {
+      method: "POST",
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: user.username,
+          logTimes: logTimes + 1,
+          lastLogDate: fulldate
+        }),
+    })
   }
 
   useEffect(() => {
@@ -59,6 +84,7 @@ function UserPage() {
       { authenticated ?
         <div>
           <h1>Welcome, {user?.firstName} </h1>
+          <p>Times logged in: {user?.logTimes} Last logged in: {user?.lastLogDate}</p>
           <button onClick={logout}>Logout</button>
           <button><a href={require("../assets/company_confidential_file.txt")} download="myFile">Download File</a></button>
         </div>

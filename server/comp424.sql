@@ -6,5 +6,7 @@ CREATE TABLE IF NOT EXISTS user (
     `first_name` varchar(255) NOT NULL,
     `last_name` varchar(255) NOT NULL,
     `email` varchar(255) NOT NULL UNIQUE,
+    `logTimes` int(20) NOT NULL,
+    `lastLogDate` varchar(255) NOT NULL, 
     PRIMARY KEY (`username`)
 );

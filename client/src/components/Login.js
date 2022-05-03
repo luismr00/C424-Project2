@@ -88,6 +88,7 @@ function Login() {
               <button type="submit">Submit</button>
           </form>
           <a href="/register"><p>Not registered? Sign up.</p></a>
+          <a href="/newpassword"><p>Forgot password?</p></a>
         </div>
         <p style={{color: 'red', visibility: errMsg}}>Username or password is invalid. Try again!</p>
       </div>
