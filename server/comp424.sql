@@ -8,5 +8,6 @@ CREATE TABLE IF NOT EXISTS user (
     `email` varchar(255) NOT NULL UNIQUE,
     `logTimes` int(20) NOT NULL,
     `lastLogDate` varchar(255) NOT NULL, 
+    `token` varchar(255) DEFAULT NULL,
     PRIMARY KEY (`username`)
 );

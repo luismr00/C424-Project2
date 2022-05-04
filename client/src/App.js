@@ -4,6 +4,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import UserPage from './components/UserPage';
 import NewPassword from './components/NewPassword';
+import ResetPassword from './components/ResetPassword';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route exact path={"/register"} component={Register} />
           <Route exact path={"/userpage"} component={UserPage} />
           <Route exact path={"/newpassword"} component={NewPassword} />
+          <Route exact path={"/reset-password/:username/:token"} component={ResetPassword} />
         </Switch>
       </div>
     </Router>

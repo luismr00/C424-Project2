@@ -5,6 +5,50 @@ const cookieParser = require("cookie-parser");
 const sessions = require('express-session');
 require('dotenv').config();
 
+//Mailing
+var createError = require('http-errors');
+var logger = require('morgan');
+// var flash = require('express-flash');
+var bodyParser = require('body-parser'); 
+var router = express.Router();
+var randtoken = require('rand-token');
+var nodemailer = require('nodemailer');
+// var indexRouter = require('./routes/index');
+// var usersRouter = require('./routes/users');
+
+// view engine setup
+// app.set('views', path.join(__dirname, 'views'));
+// app.set('view engine', 'ejs');
+ 
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+// app.use(express.static(path.join(__dirname, 'public')));
+
+// app.use(flash());
+ 
+//app.use('/', indexRouter);
+// app.use('/', usersRouter);
+ 
+// catch 404 and forward to error handler
+// app.use(function(req, res, next) {
+//   next(createError(404));
+ 
+// });
+ 
+// error handler
+app.use(function(err, req, res, next) {
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+  res.locals.error = req.app.get('env') === 'development' ? err : {};
+ 
+  // render the error page
+  res.status(err.status || 500);
+  res.render('error');
+   
+});
+
 const db = require('./config');
 
 let PORT = process.env.PORT || 4000;
@@ -88,14 +132,15 @@ app.post('/api/register', (req, res) => {
     const email = req.body.email;
     console.log('received: ' + username + ', ' + password + ', ' + firstName + ', ' + lastName + ', ' + email);
     
-    db.query("INSERT INTO user VALUES (?, ?, ?, ?, ?, ?, ?)", [
+    db.query("INSERT INTO user VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [
         username,
         password,
         firstName,
         lastName,
         email,
         0,
-        "none"
+        "none", 
+        null
     ], (err, result) => {
         if (err) {
             console.log(err)
@@ -538,3 +583,225 @@ app.post('/api/follow', (req, res) => {
         }
     });
 });
+
+
+//send email
+function sendEmail(email, username, token) {
+ 
+    var email = email;
+    var token = token;
+
+    console.log("sending to " + email);
+ 
+    var mail = nodemailer.createTransport({
+        service: 'hotmail',
+        auth: {
+            user: 'lmr_apptesting@hotmail.com',
+            pass: 'CSUNtesting'
+        },
+    });
+ 
+    var mailOptions = {
+        from: 'lmr_apptesting@hotmail.com',
+        to: email,
+        subject: 'Reset Password Link',
+        html: '<p>Hello, ' + username + '.You requested for reset password, kindly use this <a href="http://localhost:3000/reset-password/' + username + '/' + token + '">link</a> to reset your password</p>'
+        // text: "testing sending emails from react application"
+ 
+    };
+ 
+    mail.sendMail(mailOptions, function(error, info) {
+        if (error) {
+            console.log(error);
+            console.log(1);
+            // res.status(400).json({ success: false, err: error });
+        } else {
+            console.log(0);
+            // res.status(201).json({ success: true, result });
+        }
+    });
+}
+
+/* send reset password link in email */
+
+app.post('/reset-password-email', (req, res) => {
+
+    var email = req.body.email;
+ 
+    //console.log(sendEmail(email, fullUrl));
+    console.log(email);
+ 
+    db.query('SELECT * FROM user WHERE email ="' + email + '"', function(err, result) {
+        if (result[0] === undefined) {
+            // throw err;
+            console.log('The email is not registered in the database');
+            res.status(404).json({ success: false, error: err});
+        } else {
+   
+            console.log(result[0]);
+            //get username and pass as parameter to sendEmail below
+            const username = result[0].username;
+        
+            if (result[0].email.length > 0) {
+    
+            var token = randtoken.generate(20);
+    
+            var sent = sendEmail(email, username, token);
+    
+                if (sent != '0') {
+    
+                    var data = {
+                        token: token
+                    }
+    
+                    db.query('UPDATE user SET ? WHERE email ="' + email + '"', data, function(err, result) {
+                        if(err) {
+                            //throw err
+                            console.log("unable to update token for the user speciified");
+                            res.status(400).json({ success: false, err: err });
+                        }
+                    })
+    
+                    // type = 'success';
+                    // msg = 'The reset password link has been sent to your email address';
+
+                    console.log("Success. The reset password link has been sent to your email address");
+                    res.status(200).json({ success: true});
+    
+                } else {
+                    // type = 'error';
+                    // msg = 'Something goes to wrong. Please try again';
+                    console.log("Error. Something went wrong while sending the link to the email. Please try again.");
+                    res.status(400).json({ success: false });
+                }
+    
+            } else {
+                console.log('The email is not registered in the database');
+                res.status(404).json({ success: false});
+                type = 'error';
+                msg = 'The Email is not registered with us';
+    
+            }
+        }
+    
+        //req.flash(type, msg);
+        //res.redirect('/');
+    });
+});
+
+
+// db.query("INSERT INTO user VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [
+//     username,
+//     password,
+//     firstName,
+//     lastName,
+//     email,
+//     0,
+//     "none", 
+//     null
+// ], (err, result) => {
+
+app.post('/reset-password', (req, res) => {
+
+    const user = req.body.user;
+    const token = req.body.token;
+
+    db.query("SELECT token FROM user WHERE username = ?", [
+        user
+    ], (err, result) => {
+        if (err) {
+            console.log(err)
+            res.status(400).json({ success: false, err: err });
+        }
+        else {
+            console.log("successfully retrieved token from user");
+            console.log("comparing tokens");
+            console.log(result, token);
+
+            if (result[0].token != token) {
+                console.log("tokens do not match. Try requesting to reset your password again.")
+                res.status(203).json({success: false});
+            } else {
+                console.log("tokens match and user is authorized to reset password");
+                res.status(201).json({ success: true, result });
+            }
+        }
+    });
+});
+
+app.post('/update-password', (req, res) => {
+
+    const user = req.body.user;
+    const password = req.body.password;
+
+    //reset token too
+
+    db.query("UPDATE user SET password = ?, token = ? WHERE username = ?", [
+        password,
+        null,
+        user
+    ], (err, result) => {
+        if (err) {
+            console.log(err)
+            res.status(400).json({ success: false, err: err });
+        }
+        else {
+            console.log("successfully updated user's password");
+            res.status(201).json({ success: true  });
+        }
+    });
+});
+
+// router.post('/reset-password-email', function(req, res, next) {
+ 
+//     var email = req.body.email;
+ 
+//     //console.log(sendEmail(email, fullUrl));
+ 
+//     connection.query('SELECT * FROM users WHERE email ="' + email + '"', function(err, result) {
+//         if (err) throw err;
+         
+//         var type = ''
+//         var msg = ''
+   
+//         console.log(result[0]);
+     
+//         if (result[0].email.length > 0) {
+ 
+//            var token = randtoken.generate(20);
+ 
+//            var sent = sendEmail(email, token);
+ 
+//              if (sent != '0') {
+ 
+//                 var data = {
+//                     token: token
+//                 }
+ 
+//                 connection.query('UPDATE users SET ? WHERE email ="' + email + '"', data, function(err, result) {
+//                     if(err) throw err
+         
+//                 })
+ 
+//                 // type = 'success';
+//                 // msg = 'The reset password link has been sent to your email address';
+
+//                 console.log("Success. The reset password link has been sent to your email address")
+ 
+//             } else {
+//                 // type = 'error';
+//                 // msg = 'Something goes to wrong. Please try again';
+//                 console.log("Error. Something went wrong. Please try again.");
+//             }
+ 
+//         } else {
+//             console.log('2');
+//             type = 'error';
+//             msg = 'The Email is not registered with us';
+ 
+//         }
+    
+//         //req.flash(type, msg);
+//         //res.redirect('/');
+//     });
+// })
