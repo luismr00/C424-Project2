@@ -54,6 +54,7 @@ function UserPage() {
   }
 
   useEffect(() => {
+    console.log("fetching cookie for loggin in...");
     const fetchcookie = async () => {
       const res = await fetch("http://localhost:4000/", {
         method: "GET",
@@ -64,12 +65,12 @@ function UserPage() {
 
       })
       const data = await res.json();
-      if(data.user != null){
+      if(data.user != null && data.user.activated === "active"){
         setAuthenticated(true);
         setUser(data.user);
         console.log(data.user)
       } else {
-        console.log("user is not logged in");
+        console.log("user is not logged in or hasn't activated account");
         setAuthenticated(false);
         history.push("/");
       }

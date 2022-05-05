@@ -9,5 +9,6 @@ CREATE TABLE IF NOT EXISTS user (
     `logTimes` int(20) NOT NULL,
     `lastLogDate` varchar(255) NOT NULL, 
     `token` varchar(255) DEFAULT NULL,
+    `activated` varchar(20) NOT NULL,
     PRIMARY KEY (`username`)
 );

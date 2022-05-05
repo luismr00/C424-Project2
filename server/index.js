@@ -113,9 +113,14 @@ app.post('/api/login', (req, res) => {
         if (err) console.log(err) && res.status(400).json({ success: false });
         else {
             console.log("result: ", result);
-            if (result.length > 0) {
+            if (result[0].activated != 'active') {
+                res.status(401).json({ success: false, err: "User account is not active yet or has not been created" });
+            }
+            else if (result.length > 0) {
+                console.log("creating session...")
                 session = req.session;
-                session.user = { username: result[0].username, firstName: result[0].first_name, lastName: result[0].last_name, logTimes: result[0].logTimes, lastLogDate: result[0].lastLogDate };
+                session.user = { username: result[0].username, firstName: result[0].first_name, lastName: result[0].last_name, logTimes: result[0].logTimes, lastLogDate: result[0].lastLogDate, activated: result[0].activated };
+                console.log(session.user);
                 res.status(201).json({ success: true, firstName: result[0].first_name });
             } else {
                 res.status(400).json({ success: false, err: "Invalid username or password" });
@@ -132,15 +137,16 @@ app.post('/api/register', (req, res) => {
     const email = req.body.email;
     console.log('received: ' + username + ', ' + password + ', ' + firstName + ', ' + lastName + ', ' + email);
     
-    db.query("INSERT INTO user VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [
+    db.query("INSERT INTO user VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", [
         username,
         password,
         firstName,
         lastName,
         email,
-        0,
+        1,
         "none", 
-        null
+        null,
+        'pending'
     ], (err, result) => {
         if (err) {
             console.log(err)
@@ -151,7 +157,7 @@ app.post('/api/register', (req, res) => {
         else {
             console.log("user successfully created");
             session = req.session;
-            session.user = { username: username, firstName: firstName, lastName: lastName };
+            session.user = { username: username, firstName: firstName, lastName: lastName, activated: 'pending' };
             res.status(201).json({ success: true });
         }
     });
@@ -584,6 +590,72 @@ app.post('/api/follow', (req, res) => {
     });
 });
 
+//activate account through email
+app.post('/request-activation', (req, res) => {
+
+    var email = req.body.email;
+ 
+    //console.log(sendEmail(email, fullUrl));
+    console.log(email);
+ 
+    db.query('SELECT * FROM user WHERE email ="' + email + '"', function(err, result) {
+        if (result[0] === undefined) {
+            // throw err;
+            console.log('The email is not registered in the database');
+            res.status(404).json({ success: false, error: err});
+        } else {
+   
+            console.log(result[0]);
+            //get username and pass as parameter to sendEmail below
+            const username = result[0].username;
+        
+            if (result[0].email.length > 0) {
+    
+            // var token = randtoken.generate(20);
+    
+            var sent = sendEmail(email, username);
+    
+                if (sent != '0') {
+    
+                    var data = {
+                        activated: 'pending'
+                    }
+    
+                    db.query('UPDATE user SET ? WHERE email ="' + email + '"', data, function(err, result) {
+                        if(err) {
+                            //throw err
+                            console.log("unable to activate account for the user speciified");
+                            res.status(400).json({ success: false, err: err });
+                        }
+                    })
+    
+                    // type = 'success';
+                    // msg = 'The reset password link has been sent to your email address';
+
+                    console.log("user account has successfuly been activated");
+                    res.status(200).json({ success: true});
+    
+                } else {
+                    // type = 'error';
+                    // msg = 'Something goes to wrong. Please try again';
+                    console.log("Error. Something went wrong while sending the link to the email. Please try again.");
+                    res.status(400).json({ success: false });
+                }
+    
+            } else {
+                console.log('The email is not registered in the database');
+                res.status(404).json({ success: false});
+                type = 'error';
+                msg = 'The Email is not registered with us';
+    
+            }
+        }
+    
+        //req.flash(type, msg);
+        //res.redirect('/');
+    });
+});
+
 
 //send email
 function sendEmail(email, username, token) {
@@ -600,15 +672,28 @@ function sendEmail(email, username, token) {
             pass: 'CSUNtesting'
         },
     });
- 
-    var mailOptions = {
-        from: 'lmr_apptesting@hotmail.com',
-        to: email,
-        subject: 'Reset Password Link',
-        html: '<p>Hello, ' + username + '.You requested for reset password, kindly use this <a href="http://localhost:3000/reset-password/' + username + '/' + token + '">link</a> to reset your password</p>'
-        // text: "testing sending emails from react application"
- 
-    };
+
+    var mailOptions;
+
+    if (token) {
+        mailOptions = {
+            from: 'lmr_apptesting@hotmail.com',
+            to: email,
+            subject: 'Reset Password Link',
+            html: '<p>Hello, ' + username + '. You requested for reset password, kindly use this <a href="http://localhost:3000/reset-password/' + username + '/' + token + '">link</a> to reset your password</p>'
+            // text: "testing sending emails from react application"
+     
+        };
+    } else {
+        mailOptions = {
+            from: 'lmr_apptesting@hotmail.com',
+            to: email,
+            subject: 'Activate account',
+            html: '<p>Hello, ' + username + '. In order to activate your account, kindly use this <a href="http://localhost:3000/activate-account/' + username + '/activate">link</a> to be able to sign in into your account</p>'
+            // text: "testing sending emails from react application"
+     
+        };
+    }
  
     mail.sendMail(mailOptions, function(error, info) {
         if (error) {
@@ -747,6 +832,27 @@ app.post('/update-password', (req, res) => {
         }
         else {
             console.log("successfully updated user's password");
+            res.status(201).json({ success: true  });
+        }
+    });
+});
+
+app.post('/activate-account', (req, res) => {
+
+    const user = req.body.user;
+
+    //reset token too
+
+    db.query("UPDATE user SET activated = ? WHERE username = ?", [
+        'active',
+        user
+    ], (err, result) => {
+        if (err) {
+            console.log(err)
+            res.status(400).json({ success: false, err: err });
+        }
+        else {
+            console.log("successfully activated user's account");
             res.status(201).json({ success: true  });
         }
     });

@@ -5,6 +5,7 @@ import Register from './components/Register';
 import UserPage from './components/UserPage';
 import NewPassword from './components/NewPassword';
 import ResetPassword from './components/ResetPassword';
+import ActivateAccount from './components/ActivateAccount';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route exact path={"/userpage"} component={UserPage} />
           <Route exact path={"/newpassword"} component={NewPassword} />
           <Route exact path={"/reset-password/:username/:token"} component={ResetPassword} />
+          <Route exact path={"/activate-account/:username/activate"} component={ActivateAccount} />
         </Switch>
       </div>
     </Router>
