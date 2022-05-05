@@ -30,16 +30,19 @@ function Login() {
       }),
     })
     const data = await res.json();
+    //check pending activation
     if(data.success) {
       console.log("login successful");
       setErrMsg("hidden");
-      history.push("/userpage");
+      // history.push("/userpage");
+      setAuthenticated(true);
     } else {
       setErrMsg("visible");
       console.log("login failed: ", data.err);
     }
   }
 
+  //check pending activation
   const fetchcookie = async () => {
     try{
       const res = await fetch("http://localhost:4000/", {
@@ -51,7 +54,9 @@ function Login() {
 
       })
       const data = await res.json();
-      if(data.user != null){
+      console.log("checking activation");
+      console.log(data.user.activated);
+      if(data.user != null && data.user.activated === 'active') {
         setAuthenticated(true);
       } else {
         console.log("user is not logged in");

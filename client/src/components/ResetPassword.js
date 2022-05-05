@@ -70,6 +70,10 @@ const resetPw = async (e) => {
   //if password does not match, throw an error to the console to try again
   if (password != password2) {
     console.log("The passwords you typed do NOT match. Try again.");
+  } else if (password.length < 8) {
+    console.log("password must be at least 8 characters long");
+  } else if (password === password.toUpperCase() || password === password.toLowerCase()) {
+    console.log("password must have a combination of upper and lower case letters");
   } else {
     //make a post request to update password
     const res = await fetch("http://localhost:4000/update-password", {
