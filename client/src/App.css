@@ -81,3 +81,12 @@ h2 {
   background-color: black;
   padding: 10px;
 }
+
+.reCaptcha {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.center-reCaptcha {
+  display: inline-block;
+}

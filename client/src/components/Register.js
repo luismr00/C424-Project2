@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import ActivateAccount from "./ActivateAccount";
+import ReCAPTCHA from "react-google-recaptcha";
 
 function Register() {
 
@@ -13,6 +14,7 @@ function Register() {
   const [errMsg, setErrMsg] = useState("hidden");
   const [pwErr, setPwError] = useState("hidden");
   const [authenticated, setAuthenticated] = useState(false);
+  const [verified, setVerified] = useState(false);
 
   const history = useHistory();
 
@@ -122,6 +124,11 @@ function Register() {
     // }
   }, [authenticated]);
 
+  const handleOnChange = (value) => {
+    console.log("Captcha value: ", value);
+    setVerified(true);
+  }
+
     return (
       <div className="default">
         {!authenticated ? 
@@ -142,7 +149,15 @@ function Register() {
                 <input type="text" onChange={(e) => {setLastName(e.target.value)}}></input>
                 <label>Email</label>
                 <input type="text" onChange={(e) => {setEmail(e.target.value)}}></input>
-                <button type="submit">Submit</button>
+                <div className="reCaptcha">
+                <div className="center-reCaptcha">
+                  <ReCAPTCHA 
+                    sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+                    onChange={handleOnChange}
+                  />
+                </div>
+              </div>
+              <button type="submit" disabled={!verified}>Submit</button>
             </form>
             <a href="/"><p>Registered already? Sign in.</p></a>
             <p style={{color: 'red', visibility: errMsg}}>Some fields are missing. Try again!</p>

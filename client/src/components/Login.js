@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useHistory } from "react-router-dom";
+import ReCAPTCHA from "react-google-recaptcha";
 
 
 function Login() {
@@ -8,6 +9,7 @@ function Login() {
   const [password,setPassword] = useState("");
   const [errMsg, setErrMsg] = useState("hidden");
   const [authenticated, setAuthenticated] = useState(false);
+  const [verified, setVerified] = useState(false);
 
   const history = useHistory();
 
@@ -79,6 +81,11 @@ function Login() {
     }
   }, [authenticated]);
 
+  const handleOnChange = (value) => {
+    console.log("Captcha value: ", value);
+    setVerified(true);
+  }
+
     return (
       <div className="default">
         <div className="SignOrReg">
@@ -90,7 +97,16 @@ function Login() {
               <input type="text" id="username" onChange={(e) => {setEmail(e.target.value)}}></input>
               <label>Password</label>
               <input type="password" id="password" onChange={(e) => {setPassword(e.target.value)}}></input>
-              <button type="submit">Submit</button>
+              {/* recaptcha */}
+              <div className="reCaptcha">
+                <div className="center-reCaptcha">
+                  <ReCAPTCHA 
+                    sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+                    onChange={handleOnChange}
+                  />
+                </div>
+              </div>
+              <button type="submit" disabled={!verified}>Submit</button>
           </form>
           <a href="/register"><p>Not registered? Sign up.</p></a>
           <a href="/newpassword"><p>Forgot password?</p></a>
